@@ -1,0 +1,5 @@
+{"type":"usage","thread_id":"thread-astra","role":"ASTRA","model":"gpt-6-astra","sequence":1,"cumulative":{"input_tokens":120,"output_tokens":15,"cached_input_tokens":90,"reasoning_output_tokens":3,"total_tokens":135}}
+{"method":"thread/tokenUsage/updated","params":{"threadId":"thread-luna","tokenUsage":{"total":{"inputTokens":40,"outputTokens":8,"cachedInputTokens":10,"reasoningOutputTokens":2,"totalTokens":48}}}}
+{"type":"usage","thread_id":"thread-astra","role":"ASTRA","model":"gpt-6-astra","sequence":2,"cumulative":{"input_tokens":170,"output_tokens":25,"cached_input_tokens":140,"reasoning_output_tokens":6,"total_tokens":195}}
+{"type":"usage","thread_id":"thread-astra","role":"ASTRA","model":"gpt-6-astra","sequence":2,"cumulative":{"input_tokens":170,"output_tokens":25,"cached_input_tokens":140,"reasoning_output_tokens":6,"total_tokens":195}}
+{"method":"thread/tokenUsage/updated","params":{"threadId":"thread-luna","tokenUsage":{"total":{"inputTokens":70,"outputTokens":12,"cachedInputTokens":20,"reasoningOutputTokens":4,"totalTokens":82}}}}

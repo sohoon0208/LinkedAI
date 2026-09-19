@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://linkedai.local/schemas/routing-decision.schema.json",
+  "title": "LinkedAI Routing Decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tier",
+    "intent",
+    "reasons",
+    "risk_flags",
+    "changed_paths",
+    "source_mutation"
+  ],
+  "properties": {
+    "tier": {
+      "enum": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "intent": {
+      "enum": [
+        "change",
+        "investigate",
+        "review",
+        "explain"
+      ]
+    },
+    "reasons": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "risk_flags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "changed_paths": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "source_mutation": {
+      "type": "boolean"
+    },
+    "dispatch_mode": {
+      "enum": [
+        "FAST",
+        "STANDARD",
+        "DEEP"
+      ]
+    },
+    "dispatch_reason": {
+      "$ref": "#/$defs/meaningfulString"
+    },
+    "approval_policy": {
+      "enum": [
+        "AUTO",
+        "REQUIRED"
+      ]
+    },
+    "eligibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bounded_scope": {
+          "type": "boolean"
+        },
+        "known_behavior": {
+          "type": "boolean"
+        },
+        "known_dependencies": {
+          "type": "boolean"
+        },
+        "sufficient_evidence": {
+          "type": "boolean"
+        },
+        "direct_verification": {
+          "type": "boolean"
+        },
+        "unresolved_failure": {
+          "type": "boolean"
+        },
+        "material_risk": {
+          "type": "boolean"
+        },
+        "material_architectural_uncertainty": {
+          "type": "boolean"
+        },
+        "conflicting_evidence": {
+          "type": "boolean"
+        },
+        "repeated_unresolved_failures": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "dependentRequired": {
+    "dispatch_mode": [
+      "dispatch_reason"
+    ],
+    "dispatch_reason": [
+      "dispatch_mode"
+    ]
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "intent"
+        ],
+        "properties": {
+          "intent": {
+            "enum": [
+              "investigate",
+              "review",
+              "explain"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "changed_paths": {
+            "maxItems": 0
+          },
+          "source_mutation": {
+            "const": false
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "meaningfulString": {
+      "type": "string",
+      "pattern": "\\S"
+    }
+  }
+}

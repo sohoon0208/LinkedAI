@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://linkedai.local/schemas/task-packet.schema.json",
+  "title": "LinkedAI Task Packet",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "intent",
+    "goal",
+    "decision_objective",
+    "observed_state",
+    "key_code",
+    "constraints",
+    "attempted",
+    "evidence",
+    "risk_flags",
+    "output_contract"
+  ],
+  "properties": {
+    "run_id": {
+      "$ref": "#/$defs/meaningfulString"
+    },
+    "plan_id": {
+      "$ref": "#/$defs/meaningfulString"
+    },
+    "agent_id": {
+      "$ref": "#/$defs/meaningfulString"
+    },
+    "intent": {
+      "enum": [
+        "change",
+        "investigate",
+        "review",
+        "explain"
+      ]
+    },
+    "goal": {
+      "$ref": "#/$defs/meaningfulString"
+    },
+    "decision_objective": {
+      "$ref": "#/$defs/meaningfulString"
+    },
+    "observed_state": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "key_code": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "attempted": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "risk_flags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "open_question": {
+      "$ref": "#/$defs/meaningfulString"
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "execution_scope": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/acceptanceCriterion"
+      }
+    },
+    "verification_plan": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "observation_plan": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/observationPlanItem"
+      }
+    },
+    "output_contract": {
+      "$ref": "#/$defs/meaningfulString"
+    }
+  },
+  "$defs": {
+    "meaningfulString": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "acceptanceCriterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "criterion"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^AC-[1-9][0-9]*$"
+        },
+        "criterion": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      }
+    },
+    "observationPlanItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "criterion"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "criterion": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      }
+    }
+  }
+}

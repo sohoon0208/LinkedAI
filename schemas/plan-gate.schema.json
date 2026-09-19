@@ -1,0 +1,230 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://linkedai.local/schemas/plan-gate.schema.json",
+  "title": "LinkedAI Plan Approval Gate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "intent",
+    "dispatch_mode",
+    "workflow_variant",
+    "routing_decision",
+    "task_packet",
+    "plan",
+    "dispatch",
+    "baseline_snapshot",
+    "approval"
+  ],
+  "properties": {
+    "run_id": {
+      "$ref": "#/$defs/meaningfulString"
+    },
+    "intent": {
+      "enum": [
+        "change",
+        "investigate",
+        "review",
+        "explain"
+      ]
+    },
+    "dispatch_mode": {
+      "enum": [
+        "STANDARD",
+        "DEEP"
+      ]
+    },
+    "workflow_variant": {
+      "const": "plan_approval_gate"
+    },
+    "routing_decision": {
+      "type": "object"
+    },
+    "task_packet": {
+      "type": "object"
+    },
+    "plan": {
+      "type": "object"
+    },
+    "dispatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plan"
+      ],
+      "properties": {
+        "plan": {
+          "$ref": "#/$defs/receipt"
+        }
+      }
+    },
+    "baseline_snapshot": {
+      "$ref": "#/$defs/snapshot"
+    },
+    "approval": {
+      "$ref": "#/$defs/pendingApproval"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "intent"
+        ],
+        "properties": {
+          "intent": {
+            "const": "change"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "routing_decision": {
+            "type": "object",
+            "required": [
+              "source_mutation"
+            ],
+            "properties": {
+              "source_mutation": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "meaningfulString": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{64}$"
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agent_id",
+        "role",
+        "model",
+        "reasoning_effort",
+        "source",
+        "confirmed"
+      ],
+      "properties": {
+        "agent_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "role": {
+          "enum": [
+            "ASTRA",
+            "ASTRA_PLAN"
+          ]
+        },
+        "model": {
+          "const": "gpt-6-astra"
+        },
+        "reasoning_effort": {
+          "const": "medium"
+        },
+        "source": {
+          "const": "host"
+        },
+        "confirmed": {
+          "const": true
+        }
+      }
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "sha256",
+        "paths",
+        "revision"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "git",
+            "scoped"
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "paths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "revision": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      }
+    },
+    "pendingApproval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_id",
+        "state",
+        "decision",
+        "run_id",
+        "plan_generation",
+        "plan_id",
+        "plan_hash",
+        "packet_hash",
+        "baseline_hash",
+        "scope_hash",
+        "acceptance_hash",
+        "verification_hash"
+      ],
+      "properties": {
+        "approval_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "state": {
+          "const": "WAITING_FOR_APPROVAL"
+        },
+        "decision": {
+          "const": "PENDING"
+        },
+        "run_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "plan_generation": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "plan_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "plan_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "packet_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "baseline_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "scope_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "acceptance_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "verification_hash": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  }
+}

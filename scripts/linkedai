@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+usage() {
+  cat <<EOF
+LinkedAI V8 helper
+
+Usage:
+  scripts/linkedai prompt      Print the paste-into-chat LinkedAI loop prompt
+  scripts/linkedai validate    Validate repository structure and JSON schemas
+  scripts/linkedai test        Run bundled tests
+  scripts/linkedai install     Install the LinkedAI Codex skill
+  scripts/linkedai check SCHEMA <name> | check INSTANCE <name> <file>
+  scripts/linkedai check <schema-file> <instance-file>
+  scripts/linkedai check-run <bundle> --root <project-root>
+  scripts/linkedai check-plan <gate> --root <project-root>
+  scripts/linkedai fingerprint --root <git-root>
+  scripts/linkedai fingerprint --root <non-git-root> --paths <file> ...
+  scripts/linkedai dispatch-mode <routing-decision> [--current-mode MODE]
+  scripts/linkedai next-stage <verification> [options]
+  scripts/linkedai check SCHEMA sol-verification | check INSTANCE sol-verification <file>
+  scripts/linkedai ag evidence <file>  Validate captured AG evidence (never runs AG)
+  scripts/linkedai usage [args...]  Forward usage reporting to scripts/usage.py
+EOF
+}
+
+case "${1:-}" in
+  prompt)
+    cat "$ROOT/references/linkedai-loop-prompt.md"
+    ;;
+  validate)
+    python3 "$ROOT/scripts/validate.py"
+    ;;
+  test)
+    python3 -m unittest discover -s "$ROOT/tests" -p 'test_*.py' -v
+    ;;
+  check|check-run|check-plan|fingerprint|dispatch-mode|next-stage)
+    python3 "$ROOT/scripts/contracts.py" "$1" "${@:2}"
+    ;;
+  usage)
+    python3 "$ROOT/scripts/usage.py" "${@:2}"
+    ;;
+  ag)
+    if [[ "${2:-}" != "evidence" || -z "${3:-}" || -n "${4:-}" ]]; then
+      echo "usage: scripts/linkedai ag evidence <file>" >&2
+      exit 2
+    fi
+    python3 "$ROOT/scripts/ag_evidence.py" evidence "$3"
+    ;;
+  install)
+    "$ROOT/scripts/install.sh" "${@:2}"
+    ;;
+  -h|--help|help|"")
+    usage
+    ;;
+  *)
+    echo "unknown command: $1" >&2
+    usage >&2
+    exit 2
+    ;;
+esac

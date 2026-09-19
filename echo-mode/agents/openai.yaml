@@ -1,0 +1,4 @@
+interface:
+  display_name: "LinkedAI_Echo_Mode"
+  short_description: "ASTRA HIGH plans; LUNA MAX executes and verifies."
+  default_prompt: "Use $linkedai-echo-mode: run LUNA RECON, compress a bounded PACKET, dispatch ASTRA HIGH for the plan, let LUNA MAX execute it, and run a separate LUNA MAX verification pass. This is self-verifying; report the final stage as LUNA MAX VERIFY, not SOL."

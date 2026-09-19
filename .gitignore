@@ -1,0 +1,21 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+*.profraw
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+*.log
+.coverage
+.pytest_cache/
+.idea/
+.vscode/
+linkedai-output/
+
+# ChatGravity is maintained and installed as a separate skill.
+chatgravity/
+
+# Retired Antigravity bridge artifacts are not part of the public packages.
+archive/

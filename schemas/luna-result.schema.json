@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://linkedai.local/schemas/luna-result.schema.json",
+  "title": "LinkedAI LUNA Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "plan_id",
+    "agent_id",
+    "status",
+    "changes",
+    "local_decisions",
+    "criteria_evidence",
+    "commands",
+    "failures_or_unknowns",
+    "changed_paths",
+    "snapshot"
+  ],
+  "properties": {
+    "run_id": {
+      "$ref": "#/$defs/meaningfulString"
+    },
+    "plan_id": {
+      "$ref": "#/$defs/meaningfulString"
+    },
+    "agent_id": {
+      "$ref": "#/$defs/meaningfulString"
+    },
+    "status": {
+      "enum": [
+        "IMPLEMENTATION_COMPLETE",
+        "IMPLEMENTATION_BLOCKED"
+      ]
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "local_decisions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "criteria_evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/criterionEvidence"
+      }
+    },
+    "commands": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/command"
+      }
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/observation"
+      }
+    },
+    "failures_or_unknowns": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "changed_paths": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "change_surface": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "snapshot": {
+      "$ref": "#/$defs/snapshot"
+    }
+  },
+  "$defs": {
+    "meaningfulString": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "criterionEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "evidence"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^AC-[1-9][0-9]*$"
+        },
+        "status": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "UNPROVEN"
+          ]
+        },
+        "evidence": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "evidence"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "status": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "UNPROVEN"
+          ]
+        },
+        "evidence": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      }
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "phase",
+        "command",
+        "exit_code",
+        "result"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "phase": {
+          "enum": [
+            "reproduction",
+            "verification"
+          ]
+        },
+        "command": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "exit_code": {
+          "type": "integer"
+        },
+        "result": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "resolved_by": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "supersedes": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      }
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "sha256",
+        "paths",
+        "revision"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "git",
+            "scoped"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[A-Fa-f0-9]{64}$"
+        },
+        "paths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "revision": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      }
+    }
+  }
+}

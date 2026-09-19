@@ -1,0 +1,16 @@
+{
+  "run_id": "usage-prefinal",
+  "participants": [
+    {
+      "thread_id": "thread-astra",
+      "role": "ASTRA",
+      "model": "gpt-6-astra",
+      "baseline": {
+        "input_tokens": 100,
+        "output_tokens": 10
+      }
+    }
+  ],
+  "run_complete": true,
+  "includes_final_response": false
+}

@@ -1,0 +1,14 @@
+{
+  "run_id": "run-example-1",
+  "intent": "change",
+  "goal": "Fix the intermittent refresh-path login failure without changing the public signIn API.",
+  "decision_objective": "Choose a safe cache refresh strategy and authorize an implementation scope.",
+  "observed_state": ["Failure occurs only after refresh", "Retry alone does not fix it"],
+  "key_code": ["src/auth/login.ts:signIn", "src/auth/session.ts:refresh"],
+  "constraints": ["Keep signIn(email, password) unchanged", "No new dependency"],
+  "attempted": ["HTTP retry/backoff did not change the failure"],
+  "evidence": ["auth/login refresh-path test exits 1 with stale cache state"],
+  "risk_flags": ["authentication", "persistence"],
+  "open_question": "Should stale cache invalidation occur inside refresh, or should cache identity change?",
+  "output_contract": "Return the LinkedAI ASTRA architecture plan contract."
+}

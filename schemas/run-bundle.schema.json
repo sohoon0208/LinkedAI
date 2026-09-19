@@ -1,0 +1,1483 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://linkedai.local/schemas/run-bundle.schema.json",
+  "title": "LinkedAI Run Bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "intent",
+    "task_packet",
+    "result",
+    "verification",
+    "dispatch",
+    "snapshot",
+    "baseline_snapshot"
+  ],
+  "properties": {
+    "run_id": {
+      "$ref": "#/$defs/meaningfulString"
+    },
+    "intent": {
+      "enum": [
+        "change",
+        "investigate",
+        "review",
+        "explain"
+      ]
+    },
+    "source_mutation": {
+      "type": "boolean"
+    },
+    "dispatch_mode": {
+      "enum": [
+        "FAST",
+        "STANDARD",
+        "DEEP"
+      ]
+    },
+    "workflow_variant": {
+      "enum": [
+        "astra_high_luna_sol",
+        "astra_high_luna_echo",
+        "fast_luna_sol",
+        "full_astra_luna_sol",
+        "approved_plan_fast_luna_sol"
+      ]
+    },
+    "routing_decision": {
+      "$ref": "#/$defs/routingDecision"
+    },
+    "task_packet": {
+      "$ref": "#/$defs/taskPacket"
+    },
+    "plan": {
+      "$ref": "#/$defs/plan"
+    },
+    "approval": {
+      "$ref": "#/$defs/approval"
+    },
+    "result": {
+      "$ref": "#/$defs/result"
+    },
+    "verification": {
+      "oneOf": [
+        {"$ref": "#/$defs/verification"},
+        {"$ref": "#/$defs/lunaVerification"}
+      ]
+    },
+    "dispatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "plan": {
+          "$ref": "#/$defs/receipt"
+        },
+        "execution": {
+          "$ref": "#/$defs/receipt"
+        },
+        "verification": {
+          "$ref": "#/$defs/receipt"
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "plan",
+            "execution",
+            "verification"
+          ]
+        },
+        {
+          "required": [
+            "execution",
+            "verification"
+          ],
+          "not": {
+            "required": [
+              "plan"
+            ]
+          }
+        }
+      ]
+    },
+    "snapshot": {
+      "$ref": "#/$defs/snapshot"
+    },
+    "baseline_snapshot": {
+      "$ref": "#/$defs/snapshot"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["workflow_variant"],
+        "properties": {"workflow_variant": {"const": "astra_high_luna_sol"}}
+      },
+      "then": {
+        "required": ["dispatch_mode", "routing_decision", "plan"],
+        "not": {"required": ["approval"]},
+        "properties": {
+          "dispatch": {"required": ["plan", "execution", "verification"]},
+          "verification": {"$ref": "#/$defs/verification"}
+        }
+      }
+    },
+    {
+      "if": {
+        "required": ["workflow_variant"],
+        "properties": {"workflow_variant": {"const": "astra_high_luna_echo"}}
+      },
+      "then": {
+        "required": ["dispatch_mode", "routing_decision", "plan"],
+        "not": {"required": ["approval"]},
+        "properties": {
+          "dispatch": {"required": ["plan", "execution", "verification"]},
+          "verification": {"$ref": "#/$defs/lunaVerification"}
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "workflow_variant"
+        ],
+        "properties": {
+          "workflow_variant": {
+            "const": "fast_luna_sol"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "dispatch_mode",
+          "routing_decision"
+        ],
+        "not": {
+          "required": [
+            "plan"
+          ]
+        },
+        "properties": {
+          "dispatch_mode": {
+            "const": "FAST"
+          },
+          "routing_decision": {
+            "properties": {
+              "tier": {
+                "const": 0
+              },
+              "intent": {
+                "const": "change"
+              },
+              "source_mutation": {
+                "const": true
+              }
+            }
+          },
+          "task_packet": {
+            "required": [
+              "plan_id",
+              "execution_scope",
+              "acceptance_criteria",
+              "verification_plan"
+            ]
+          },
+          "dispatch": {
+            "required": [
+              "execution",
+              "verification"
+            ],
+            "not": {
+              "required": [
+                "plan"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "workflow_variant"
+        ],
+        "properties": {
+          "workflow_variant": {
+            "const": "approved_plan_fast_luna_sol"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "dispatch_mode",
+          "routing_decision",
+          "plan",
+          "approval"
+        ],
+        "properties": {
+          "dispatch_mode": {
+            "enum": [
+              "STANDARD",
+              "DEEP"
+            ]
+          },
+          "routing_decision": {
+            "properties": {
+              "intent": {
+                "const": "change"
+              },
+              "source_mutation": {
+                "const": true
+              }
+            }
+          },
+          "approval": {
+            "properties": {
+              "state": {
+                "const": "APPROVED"
+              }
+            }
+          },
+          "dispatch": {
+            "required": [
+              "plan",
+              "execution",
+              "verification"
+            ]
+          },
+          "task_packet": {
+            "required": [
+              "plan_id"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "workflow_variant"
+        ],
+        "properties": {
+          "workflow_variant": {
+            "const": "full_astra_luna_sol"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "plan"
+        ],
+        "properties": {
+          "dispatch": {
+            "required": [
+              "plan",
+              "execution",
+              "verification"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "dispatch_mode"
+        ],
+        "properties": {
+          "dispatch_mode": {
+            "enum": [
+              "STANDARD",
+              "DEEP"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "workflow_variant",
+          "plan"
+        ],
+        "properties": {
+          "workflow_variant": {
+            "enum": [
+              "astra_high_luna_sol",
+              "astra_high_luna_echo",
+              "full_astra_luna_sol",
+              "approved_plan_fast_luna_sol"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "dispatch_mode"
+        ],
+        "properties": {
+          "dispatch_mode": {
+            "const": "FAST"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "workflow_variant",
+          "routing_decision"
+        ],
+        "properties": {
+          "workflow_variant": {
+            "enum": [
+              "fast_luna_sol",
+              "astra_high_luna_sol",
+              "astra_high_luna_echo"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "meaningfulString": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{64}$"
+    },
+    "taskPacket": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "intent",
+        "goal",
+        "decision_objective",
+        "observed_state",
+        "key_code",
+        "constraints",
+        "attempted",
+        "evidence",
+        "risk_flags",
+        "output_contract"
+      ],
+      "properties": {
+        "run_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "plan_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "agent_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "intent": {
+          "enum": [
+            "change",
+            "investigate",
+            "review",
+            "explain"
+          ]
+        },
+        "goal": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "decision_objective": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "observed_state": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "key_code": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "attempted": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "risk_flags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "open_question": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "open_questions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "execution_scope": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/acceptanceCriterion"
+          }
+        },
+        "verification_plan": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "observation_plan": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/observationPlanItem"
+          }
+        },
+        "output_contract": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      }
+    },
+    "routingDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tier",
+        "intent",
+        "reasons",
+        "risk_flags",
+        "changed_paths",
+        "source_mutation",
+        "eligibility"
+      ],
+      "properties": {
+        "tier": {
+          "enum": [0, 1, 2, 3]
+        },
+        "intent": {
+          "enum": ["change", "investigate", "review", "explain"]
+        },
+        "reasons": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "risk_flags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "changed_paths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "source_mutation": {
+          "type": "boolean"
+        },
+        "approval_policy": {
+          "enum": [
+            "AUTO",
+            "REQUIRED"
+          ]
+        },
+        "eligibility": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "bounded_scope",
+            "known_behavior",
+            "known_dependencies",
+            "sufficient_evidence",
+            "direct_verification",
+            "unresolved_failure",
+            "material_risk",
+            "material_architectural_uncertainty",
+            "conflicting_evidence",
+            "repeated_unresolved_failures"
+          ],
+          "properties": {
+            "bounded_scope": {"type": "boolean"},
+            "known_behavior": {"type": "boolean"},
+            "known_dependencies": {"type": "boolean"},
+            "sufficient_evidence": {"type": "boolean"},
+            "direct_verification": {"type": "boolean"},
+            "unresolved_failure": {"type": "boolean"},
+            "material_risk": {"type": "boolean"},
+            "material_architectural_uncertainty": {"type": "boolean"},
+            "conflicting_evidence": {"type": "boolean"},
+            "repeated_unresolved_failures": {"type": "boolean"}
+          }
+        }
+      }
+    },
+    "acceptanceCriterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "criterion"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^AC-[1-9][0-9]*$"
+        },
+        "criterion": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      }
+    },
+    "evidenceRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "targets",
+        "reason"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "reason": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      }
+    },
+    "observationPlanItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "criterion"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "criterion": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      }
+    },
+    "criterionEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "evidence"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^AC-[1-9][0-9]*$"
+        },
+        "status": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "UNPROVEN"
+          ]
+        },
+        "evidence": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      }
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "phase",
+        "command",
+        "exit_code",
+        "result"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "phase": {
+          "enum": [
+            "reproduction",
+            "verification"
+          ]
+        },
+        "command": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "exit_code": {
+          "type": "integer"
+        },
+        "result": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "resolved_by": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "supersedes": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "evidence"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "status": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "UNPROVEN"
+          ]
+        },
+        "evidence": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      }
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "sha256",
+        "paths",
+        "revision"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "git",
+            "scoped"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[A-Fa-f0-9]{64}$"
+        },
+        "paths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "revision": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agent_id",
+        "role",
+        "model",
+        "reasoning_effort",
+        "source",
+        "confirmed"
+      ],
+      "properties": {
+        "agent_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "role": {
+          "enum": [
+            "ASTRA",
+            "ASTRA_PLAN",
+            "SOL",
+            "SOL_VERIFICATION",
+            "LUNA",
+            "LUNA_EXECUTION",
+            "LUNA_VERIFICATION"
+          ]
+        },
+        "model": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "reasoning_effort": {
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ]
+        },
+        "source": {
+          "const": "host"
+        },
+        "confirmed": {
+          "const": true
+        }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_id",
+        "state",
+        "decision",
+        "run_id",
+        "plan_generation",
+        "plan_id",
+        "plan_hash",
+        "packet_hash",
+        "baseline_hash",
+        "scope_hash",
+        "acceptance_hash",
+        "verification_hash"
+      ],
+      "properties": {
+        "approval_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "state": {
+          "enum": [
+            "WAITING_FOR_APPROVAL",
+            "APPROVED",
+            "REJECTED",
+            "STALE"
+          ]
+        },
+        "decision": {
+          "enum": [
+            "PENDING",
+            "APPROVE_IMPLEMENTATION",
+            "REJECT",
+            "REQUEST_CHANGES"
+          ]
+        },
+        "actor": {
+          "enum": [
+            "USER"
+          ]
+        },
+        "approved_at": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "run_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "plan_generation": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "plan_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "plan_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "packet_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "baseline_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "scope_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "acceptance_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "verification_hash": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "state"
+            ],
+            "properties": {
+              "state": {
+                "const": "WAITING_FOR_APPROVAL"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "decision"
+            ],
+            "properties": {
+              "decision": {
+                "const": "PENDING"
+              }
+            },
+            "not": {
+              "required": [
+                "actor",
+                "approved_at"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "state"
+            ],
+            "properties": {
+              "state": {
+                "const": "APPROVED"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "actor",
+              "approved_at"
+            ],
+            "properties": {
+              "decision": {
+                "const": "APPROVE_IMPLEMENTATION"
+              },
+              "actor": {
+                "const": "USER"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "plan": {
+      "type": "object",
+      "additionalProperties": false,
+        "required": [
+          "run_id",
+          "plan_id",
+          "agent_id",
+          "intent",
+          "decision",
+        "decision_objective",
+        "root_cause_status",
+        "root_cause",
+        "facts_used",
+        "architecture_decisions",
+        "change_scope",
+        "implementation_steps",
+        "constraints",
+        "acceptance_criteria",
+        "verification_plan",
+        "evidence_requests",
+        "escalation_condition"
+      ],
+      "properties": {
+        "run_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "plan_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "agent_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "intent": {
+          "enum": [
+            "change",
+            "investigate",
+            "review",
+            "explain"
+          ]
+        },
+        "decision": {
+          "enum": [
+            "IMPLEMENT",
+            "INVESTIGATE_MORE",
+            "REQUEST_EVIDENCE",
+            "REPLAN",
+            "BLOCKED"
+          ]
+        },
+        "decision_objective": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "root_cause_status": {
+          "enum": [
+            "ESTABLISHED",
+            "HYPOTHESIS",
+            "UNKNOWN",
+            "NOT_APPLICABLE"
+          ]
+        },
+        "root_cause": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "facts_used": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "architecture_decisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "change_scope": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "implementation_steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/acceptanceCriterion"
+          }
+        },
+        "verification_plan": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "observation_plan": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/observationPlanItem"
+          }
+        },
+        "evidence_requests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidenceRequest"
+          }
+        },
+        "escalation_condition": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "decision"
+            ],
+            "properties": {
+              "decision": {
+                "enum": [
+                  "IMPLEMENT",
+                  "INVESTIGATE_MORE"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "implementation_steps": {
+                "minItems": 1
+              },
+              "acceptance_criteria": {
+                "minItems": 1
+              }
+            },
+            "anyOf": [
+              {
+                "properties": {
+                  "verification_plan": {
+                    "minItems": 1
+                  }
+                }
+              },
+              {
+                "required": [
+                  "observation_plan"
+                ],
+                "properties": {
+                  "observation_plan": {
+                    "minItems": 1
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "decision"
+            ],
+            "properties": {
+              "decision": {
+                "enum": [
+                  "REQUEST_EVIDENCE",
+                  "BLOCKED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "implementation_steps": {
+                "maxItems": 0
+              },
+              "acceptance_criteria": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "decision"
+            ],
+            "properties": {
+              "decision": {
+                "const": "REQUEST_EVIDENCE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evidence_requests": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "plan_id",
+        "agent_id",
+        "status",
+        "changes",
+        "local_decisions",
+        "criteria_evidence",
+        "commands",
+        "failures_or_unknowns",
+        "changed_paths",
+        "snapshot"
+      ],
+      "properties": {
+        "run_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "plan_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "agent_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "status": {
+          "enum": [
+            "IMPLEMENTATION_COMPLETE",
+            "IMPLEMENTATION_BLOCKED"
+          ]
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "local_decisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "criteria_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/criterionEvidence"
+          }
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/command"
+          }
+        },
+        "observations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/observation"
+          }
+        },
+        "failures_or_unknowns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "changed_paths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "change_surface": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "snapshot": {
+          "$ref": "#/$defs/snapshot"
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "plan_id",
+        "agent_id",
+        "authority",
+        "state",
+        "criteria",
+        "decisive_evidence",
+        "remaining_problem",
+        "next_open_question",
+        "next_scope",
+        "evidence_requests",
+        "attempts",
+        "limits",
+        "snapshot"
+      ],
+      "properties": {
+        "run_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "plan_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "agent_id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "authority": {
+          "const": "SOL"
+        },
+        "state": {
+          "enum": [
+            "DONE",
+            "RETRY",
+            "REPLAN",
+            "EVIDENCE",
+            "BLOCKED"
+          ]
+        },
+        "criteria": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/criterionEvidence"
+          }
+        },
+        "decisive_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "remaining_problem": {
+          "type": "string"
+        },
+        "next_open_question": {
+          "type": "string"
+        },
+        "next_scope": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "evidence_requests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidenceRequest"
+          }
+        },
+        "attempts": {
+          "$ref": "#/$defs/counters"
+        },
+        "limits": {
+          "$ref": "#/$defs/limits"
+        },
+        "snapshot": {
+          "$ref": "#/$defs/snapshot"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "state"
+            ],
+            "properties": {
+              "state": {
+                "const": "DONE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "criteria": {
+                "minItems": 1,
+                "items": {
+                  "properties": {
+                    "status": {
+                      "const": "PASS"
+                    }
+                  }
+                }
+              },
+              "decisive_evidence": {
+                "minItems": 1
+              },
+              "remaining_problem": {
+                "const": ""
+              },
+              "next_open_question": {
+                "const": ""
+              },
+              "next_scope": {
+                "maxItems": 0
+              },
+              "evidence_requests": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "state"
+            ],
+            "properties": {
+              "state": {
+                "const": "EVIDENCE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evidence_requests": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "state"
+            ],
+            "properties": {
+              "state": {
+                "enum": [
+                  "RETRY",
+                  "REPLAN",
+                  "EVIDENCE",
+                  "BLOCKED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "remaining_problem": {
+                "pattern": "\\S"
+              },
+              "next_open_question": {
+                "pattern": "\\S"
+              },
+              "next_scope": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "lunaVerification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "plan_id",
+        "agent_id",
+        "authority",
+        "state",
+        "criteria",
+        "decisive_evidence",
+        "remaining_problem",
+        "next_open_question",
+        "next_scope",
+        "evidence_requests",
+        "attempts",
+        "limits",
+        "snapshot"
+      ],
+      "properties": {
+        "run_id": {"$ref": "#/$defs/meaningfulString"},
+        "plan_id": {"$ref": "#/$defs/meaningfulString"},
+        "agent_id": {"$ref": "#/$defs/meaningfulString"},
+        "authority": {"const": "LUNA"},
+        "state": {"enum": ["DONE", "RETRY", "REPLAN", "EVIDENCE", "BLOCKED"]},
+        "criteria": {"type": "array", "items": {"$ref": "#/$defs/criterionEvidence"}},
+        "decisive_evidence": {"type": "array", "items": {"$ref": "#/$defs/meaningfulString"}},
+        "remaining_problem": {"type": "string"},
+        "next_open_question": {"type": "string"},
+        "next_scope": {"type": "array", "items": {"$ref": "#/$defs/meaningfulString"}},
+        "evidence_requests": {"type": "array", "items": {"$ref": "#/$defs/evidenceRequest"}},
+        "attempts": {"$ref": "#/$defs/lunaCounters"},
+        "limits": {"$ref": "#/$defs/lunaLimits"},
+        "snapshot": {"$ref": "#/$defs/snapshot"}
+      },
+      "allOf": [
+        {
+          "if": {"required": ["state"], "properties": {"state": {"const": "DONE"}}},
+          "then": {
+            "properties": {
+              "criteria": {"minItems": 1, "items": {"properties": {"status": {"const": "PASS"}}}},
+              "decisive_evidence": {"minItems": 1},
+              "remaining_problem": {"const": ""},
+              "next_open_question": {"const": ""},
+              "next_scope": {"maxItems": 0},
+              "evidence_requests": {"maxItems": 0}
+            }
+          }
+        },
+        {
+          "if": {"required": ["state"], "properties": {"state": {"const": "EVIDENCE"}}},
+          "then": {"properties": {"evidence_requests": {"minItems": 1}}}
+        },
+        {
+          "if": {
+            "required": ["state"],
+            "properties": {"state": {"enum": ["RETRY", "REPLAN", "EVIDENCE", "BLOCKED"]}}
+          },
+          "then": {
+            "properties": {
+              "remaining_problem": {"pattern": "\\S"},
+              "next_open_question": {"pattern": "\\S"},
+              "next_scope": {"minItems": 1}
+            }
+          }
+        }
+      ]
+    },
+    "counters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sol_verifications", "luna_attempts", "astra_plans"],
+      "properties": {
+        "sol_verifications": {"type": "integer", "minimum": 0},
+        "luna_attempts": {"type": "integer", "minimum": 0},
+        "astra_plans": {"type": "integer", "minimum": 0}
+      }
+    },
+    "lunaCounters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["luna_verifications", "luna_attempts", "astra_plans"],
+      "properties": {
+        "luna_verifications": {"type": "integer", "minimum": 0},
+        "luna_attempts": {"type": "integer", "minimum": 0},
+        "astra_plans": {"type": "integer", "minimum": 0}
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_sol_verifications", "max_luna_attempts", "max_astra_plans"],
+      "properties": {
+        "max_sol_verifications": {"type": "integer", "minimum": 1},
+        "max_luna_attempts": {"type": "integer", "minimum": 1},
+        "max_astra_plans": {"type": "integer", "minimum": 0}
+      }
+    },
+    "lunaLimits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_luna_verifications", "max_luna_attempts", "max_astra_plans"],
+      "properties": {
+        "max_luna_verifications": {"type": "integer", "minimum": 1},
+        "max_luna_attempts": {"type": "integer", "minimum": 1},
+        "max_astra_plans": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

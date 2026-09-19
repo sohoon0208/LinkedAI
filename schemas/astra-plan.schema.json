@@ -1,0 +1,278 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://linkedai.local/schemas/astra-plan.schema.json",
+  "title": "LinkedAI ASTRA Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "plan_id",
+    "agent_id",
+    "intent",
+    "decision",
+    "decision_objective",
+    "root_cause_status",
+    "root_cause",
+    "facts_used",
+    "architecture_decisions",
+    "change_scope",
+    "implementation_steps",
+    "constraints",
+    "acceptance_criteria",
+    "verification_plan",
+    "evidence_requests",
+    "escalation_condition"
+  ],
+  "properties": {
+    "run_id": {
+      "$ref": "#/$defs/meaningfulString"
+    },
+    "plan_id": {
+      "$ref": "#/$defs/meaningfulString"
+    },
+    "agent_id": {
+      "$ref": "#/$defs/meaningfulString"
+    },
+    "intent": {
+      "enum": [
+        "change",
+        "investigate",
+        "review",
+        "explain"
+      ]
+    },
+    "decision": {
+      "enum": [
+        "IMPLEMENT",
+        "INVESTIGATE_MORE",
+        "REQUEST_EVIDENCE",
+        "REPLAN",
+        "BLOCKED"
+      ]
+    },
+    "decision_objective": {
+      "$ref": "#/$defs/meaningfulString"
+    },
+    "root_cause_status": {
+      "enum": [
+        "ESTABLISHED",
+        "HYPOTHESIS",
+        "UNKNOWN",
+        "NOT_APPLICABLE"
+      ]
+    },
+    "root_cause": {
+      "$ref": "#/$defs/meaningfulString"
+    },
+    "facts_used": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "architecture_decisions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "change_scope": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "implementation_steps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/acceptanceCriterion"
+      }
+    },
+    "verification_plan": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/meaningfulString"
+      }
+    },
+    "observation_plan": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/observationPlanItem"
+      }
+    },
+    "evidence_requests": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidenceRequest"
+      }
+    },
+    "escalation_condition": {
+      "$ref": "#/$defs/meaningfulString"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "decision"
+        ],
+        "properties": {
+          "decision": {
+            "enum": [
+              "IMPLEMENT",
+              "INVESTIGATE_MORE"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "implementation_steps": {
+            "minItems": 1
+          },
+          "acceptance_criteria": {
+            "minItems": 1
+          }
+        },
+        "anyOf": [
+          {
+            "properties": {
+              "verification_plan": {
+                "minItems": 1
+              }
+            }
+          },
+          {
+            "required": [
+              "observation_plan"
+            ],
+            "properties": {
+              "observation_plan": {
+                "minItems": 1
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "decision"
+        ],
+        "properties": {
+          "decision": {
+            "enum": [
+              "REQUEST_EVIDENCE",
+              "BLOCKED"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "implementation_steps": {
+            "maxItems": 0
+          },
+          "acceptance_criteria": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "decision"
+        ],
+        "properties": {
+          "decision": {
+            "const": "REQUEST_EVIDENCE"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "evidence_requests": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "meaningfulString": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "acceptanceCriterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "criterion"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^AC-[1-9][0-9]*$"
+        },
+        "criterion": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      }
+    },
+    "evidenceRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "targets",
+        "reason"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/meaningfulString"
+          }
+        },
+        "reason": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      }
+    },
+    "observationPlanItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "criterion"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/meaningfulString"
+        },
+        "criterion": {
+          "$ref": "#/$defs/meaningfulString"
+        }
+      }
+    }
+  }
+}

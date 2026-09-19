@@ -1,0 +1,134 @@
+{
+  "run_id": "run-fixture-1",
+  "intent": "change",
+  "source_mutation": true,
+  "dispatch_mode": "STANDARD",
+  "workflow_variant": "astra_high_luna_sol",
+  "routing_decision": {
+    "tier": 1,
+    "intent": "change",
+    "reasons": ["ordinary bounded fixture change"],
+    "risk_flags": [],
+    "changed_paths": ["tests/fixtures/current-run/complete-run.json"],
+    "source_mutation": true,
+    "approval_policy": "AUTO",
+    "eligibility": {
+      "bounded_scope": false,
+      "known_behavior": true,
+      "known_dependencies": true,
+      "sufficient_evidence": true,
+      "direct_verification": true,
+      "unresolved_failure": false,
+      "material_risk": false,
+      "material_architectural_uncertainty": false,
+      "conflicting_evidence": false,
+      "repeated_unresolved_failures": false
+    }
+  },
+  "task_packet": {
+    "run_id": "run-fixture-1",
+    "intent": "change",
+    "goal": "Demonstrate a complete LinkedAI run.",
+    "decision_objective": "Authorize the bounded implementation and verify its result.",
+    "observed_state": ["The example run has a stable fixture state."],
+    "key_code": ["tests/fixtures/current-run/complete-run.json"],
+    "constraints": ["Keep the example deterministic."],
+    "attempted": ["Recorded the initial reproduction."],
+    "evidence": ["The fixture contains a passing verification rerun."],
+    "risk_flags": [],
+    "output_contract": "Return the structured run bundle."
+  },
+  "plan": {
+    "run_id": "run-fixture-1",
+    "plan_id": "plan-fixture-1",
+    "agent_id": "astra-plan-fixture",
+    "intent": "change",
+    "decision": "IMPLEMENT",
+    "decision_objective": "Authorize the bounded implementation and verify its result.",
+    "root_cause_status": "ESTABLISHED",
+    "root_cause": "The fixture is intentionally self-contained.",
+    "facts_used": ["The fixture is available locally."],
+    "architecture_decisions": ["Use the existing contract boundary."],
+    "change_scope": ["tests/fixtures/current-run/complete-run.json"],
+    "implementation_steps": ["Apply the bounded change."],
+    "constraints": ["Keep the example deterministic."],
+    "acceptance_criteria": [
+      {"id": "AC-1", "criterion": "The final verification passes."}
+    ],
+    "verification_plan": ["example verify"],
+    "evidence_requests": [],
+    "escalation_condition": "Request evidence if final verification cannot run."
+  },
+  "result": {
+    "run_id": "run-fixture-1",
+    "plan_id": "plan-fixture-1",
+    "agent_id": "luna-execution-fixture",
+    "status": "IMPLEMENTATION_COMPLETE",
+    "changes": ["Recorded the complete fixture run."],
+    "local_decisions": ["Used a passing rerun to resolve an earlier failure."],
+    "criteria_evidence": [
+      {"id": "AC-1", "status": "PASS", "evidence": "The final verification exited 0."}
+    ],
+    "commands": [
+      {"id": "repro-1", "phase": "reproduction", "command": "example reproduce", "exit_code": 1, "result": "The known failure reproduced."},
+      {"id": "verify-1", "phase": "verification", "command": "example verify", "exit_code": 1, "result": "The first verification attempt failed."},
+      {"id": "verify-2", "phase": "verification", "command": "example verify", "exit_code": 0, "result": "The rerun passed.", "supersedes": "verify-1"}
+    ],
+    "failures_or_unknowns": [],
+    "changed_paths": ["tests/fixtures/current-run/complete-run.json"],
+    "snapshot": {
+      "kind": "scoped",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "paths": ["tests/fixtures/current-run/complete-run.json"],
+      "revision": "fixture"
+    }
+  },
+  "verification": {
+    "run_id": "run-fixture-1",
+    "plan_id": "plan-fixture-1",
+    "agent_id": "sol-verification-fixture",
+    "authority": "SOL",
+    "state": "DONE",
+    "criteria": [
+      {"id": "AC-1", "status": "PASS", "evidence": "The final verification exited 0."}
+    ],
+    "decisive_evidence": ["The final verification passed."],
+    "remaining_problem": "",
+    "next_open_question": "",
+    "next_scope": [],
+    "evidence_requests": [],
+    "attempts": {
+      "sol_verifications": 1,
+      "luna_attempts": 1,
+      "astra_plans": 1
+    },
+    "limits": {
+      "max_sol_verifications": 5,
+      "max_luna_attempts": 2,
+      "max_astra_plans": 5
+    },
+    "snapshot": {
+      "kind": "scoped",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "paths": ["tests/fixtures/current-run/complete-run.json"],
+      "revision": "fixture"
+    }
+  },
+  "dispatch": {
+    "plan": {"agent_id": "astra-plan-fixture", "role": "ASTRA_PLAN", "model": "gpt-6-astra", "reasoning_effort": "high", "source": "host", "confirmed": true},
+    "execution": {"agent_id": "luna-execution-fixture", "role": "LUNA_EXECUTION", "model": "gpt-5.6-luna", "reasoning_effort": "max", "source": "host", "confirmed": true},
+    "verification": {"agent_id": "sol-verification-fixture", "role": "SOL_VERIFICATION", "model": "gpt-5.6-sol", "reasoning_effort": "high", "source": "host", "confirmed": true}
+  },
+  "snapshot": {
+    "kind": "scoped",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "paths": ["tests/fixtures/current-run/complete-run.json"],
+    "revision": "fixture"
+  },
+  "baseline_snapshot": {
+    "kind": "scoped",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "paths": ["tests/fixtures/current-run/complete-run.json"],
+    "revision": "fixture"
+  }
+}

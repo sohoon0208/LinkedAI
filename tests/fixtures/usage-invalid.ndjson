@@ -1,0 +1,5 @@
+{"type":"usage","thread_id":"thread-astra","model":"gpt-6-astra","sequence":1,"cumulative":{"input_tokens":-1,"output_tokens":2}}
+{"type":"usage","thread_id":"thread-astra","model":"gpt-6-astra","sequence":2,"cumulative":{"input_tokens":true,"output_tokens":2}}
+{"type":"usage","thread_id":"thread-astra","model":"gpt-6-astra","sequence":3,"cumulative":{"input_tokens":4,"output_tokens":2,"cached_input_tokens":5}}
+{"type":"usage","thread_id":"thread-astra","model":"gpt-6-astra","sequence":4,"cumulative":{"input_tokens":6,"output_tokens":3,"total_tokens":99}}
+not-json
