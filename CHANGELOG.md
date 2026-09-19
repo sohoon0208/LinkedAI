@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.12.0 — Balanced and Quick verification profiles
+
+- Added `BALANCED` verification for normal FAST/STANDARD LinkedAI runs: SOL
+  remains independent and authoritative, while full fingerprints, exact host
+  receipts, and unrelated checks are no longer mandatory for bounded changes.
+- Added `FULL` behavior for DEEP runs and preserved strict validation for
+  legacy bundles without a profile.
+- Added `QUICK` verification to Echo Mode with one plan, one repair budget, no
+  automatic replan, and optional fingerprints for bounded source changes.
+- Added profile-aware schemas, routing metadata, completion reports, and
+  regression coverage.
+
 ## 0.11.0 — ASTRA HIGH fixed pipeline and Echo Mode
 
 - Changed the active LinkedAI sequence to `LUNA RECON -> PACKET -> ASTRA HIGH

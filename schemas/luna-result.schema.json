@@ -14,8 +14,7 @@
     "criteria_evidence",
     "commands",
     "failures_or_unknowns",
-    "changed_paths",
-    "snapshot"
+    "changed_paths"
   ],
   "properties": {
     "run_id": {

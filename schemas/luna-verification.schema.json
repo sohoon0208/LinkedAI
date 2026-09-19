@@ -18,8 +18,7 @@
     "next_scope",
     "evidence_requests",
     "attempts",
-    "limits",
-    "snapshot"
+    "limits"
   ],
   "properties": {
     "run_id": {"$ref": "#/$defs/meaningfulString"},

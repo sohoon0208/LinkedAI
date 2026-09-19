@@ -43,6 +43,7 @@ class RoutingPolicyTests(unittest.TestCase):
         self.assertTrue(result["input_valid"])
         self.assertEqual(result["workflow_variant"], contracts.ASTRA_HIGH_LUNA_SOL_VARIANT)
         self.assertEqual(result["workflow_stages"], list(contracts.ASTRA_HIGH_LUNA_SOL_WORKFLOW_STAGES))
+        self.assertEqual(result["verification_profile"], "BALANCED")
         self.assertEqual(result["approval_policy"], "AUTO")
         self.assertFalse(result["approval_required"])
 
@@ -52,6 +53,7 @@ class RoutingPolicyTests(unittest.TestCase):
         result = contracts.select_dispatch_mode(standard)
         self.assertEqual(result["workflow_variant"], contracts.ASTRA_HIGH_LUNA_SOL_VARIANT)
         self.assertEqual(result["workflow_stages"], list(contracts.ASTRA_HIGH_LUNA_SOL_WORKFLOW_STAGES))
+        self.assertEqual(result["verification_profile"], "BALANCED")
         self.assertEqual(result["approval_policy"], "AUTO")
         self.assertFalse(result["approval_required"])
         self.assertIsNone(result["post_approval_variant"])
@@ -62,6 +64,7 @@ class RoutingPolicyTests(unittest.TestCase):
         result = contracts.select_dispatch_mode(deep)
         self.assertEqual(result["workflow_variant"], contracts.ASTRA_HIGH_LUNA_SOL_VARIANT)
         self.assertEqual(result["workflow_stages"], list(contracts.ASTRA_HIGH_LUNA_SOL_WORKFLOW_STAGES))
+        self.assertEqual(result["verification_profile"], "FULL")
         self.assertEqual(result["approval_policy"], "AUTO")
         self.assertFalse(result["approval_required"])
 
@@ -71,6 +74,7 @@ class RoutingPolicyTests(unittest.TestCase):
         result = contracts.select_dispatch_mode(decision)
         self.assertEqual(result["dispatch_mode"], "FAST")
         self.assertEqual(result["workflow_variant"], contracts.ASTRA_HIGH_LUNA_SOL_VARIANT)
+        self.assertEqual(result["verification_profile"], "BALANCED")
         self.assertEqual(result["approval_policy"], "AUTO")
         self.assertFalse(result["approval_required"])
 
@@ -82,6 +86,7 @@ class RoutingPolicyTests(unittest.TestCase):
         result = contracts.select_dispatch_mode(decision)
         self.assertEqual(result["dispatch_mode"], "STANDARD")
         self.assertEqual(result["workflow_variant"], contracts.ASTRA_HIGH_LUNA_SOL_VARIANT)
+        self.assertEqual(result["verification_profile"], "BALANCED")
 
     def test_missing_or_malformed_fast_inputs_fall_back_to_standard(self):
         missing = self.fast_decision()

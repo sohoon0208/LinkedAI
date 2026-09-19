@@ -8,11 +8,12 @@ verification into bounded model handoffs.
 ### LinkedAI
 
 ```text
-LUNA MAX RECON -> PACKET -> ASTRA HIGH PLAN -> LUNA MAX EXECUTION -> SOL HIGH VERIFY
+LUNA MAX RECON -> PACKET -> ASTRA HIGH PLAN -> LUNA MAX EXECUTION -> SOL LIGHT VERIFY
 ```
 
 ASTRA plans, LUNA investigates and codes, and SOL independently verifies the
-result. SOL is the only completion authority in this workflow.
+result. FAST/STANDARD use balanced SOL verification; DEEP uses the stricter
+FULL profile. SOL is the only completion authority in this workflow.
 
 ### LinkedAI Echo Mode
 
@@ -21,7 +22,8 @@ LUNA MAX RECON -> PACKET -> ASTRA HIGH PLAN -> LUNA MAX EXECUTION -> LUNA MAX VE
 ```
 
 Echo Mode uses a fresh LUNA verification pass instead of independent SOL
-verification. It is faster, but its final check is not independent.
+verification. It uses the QUICK profile for small bounded tasks. It is faster,
+but its final check is not independent.
 
 ## Repository structure
 

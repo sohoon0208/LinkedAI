@@ -10,9 +10,7 @@
     "task_packet",
     "result",
     "verification",
-    "dispatch",
-    "snapshot",
-    "baseline_snapshot"
+    "dispatch"
   ],
   "properties": {
     "run_id": {
@@ -43,6 +41,13 @@
         "fast_luna_sol",
         "full_astra_luna_sol",
         "approved_plan_fast_luna_sol"
+      ]
+    },
+    "verification_profile": {
+      "enum": [
+        "BALANCED",
+        "FULL",
+        "QUICK"
       ]
     },
     "routing_decision": {
@@ -109,6 +114,45 @@
     }
   },
   "allOf": [
+    {
+      "if": {
+        "required": ["verification_profile"],
+        "properties": {"verification_profile": {"const": "FULL"}}
+      },
+      "then": {
+        "required": ["snapshot", "baseline_snapshot"]
+      }
+    },
+    {
+      "if": {
+        "not": {"required": ["verification_profile"]}
+      },
+      "then": {
+        "required": ["snapshot", "baseline_snapshot"]
+      }
+    },
+    {
+      "if": {
+        "required": ["workflow_variant"],
+        "properties": {"workflow_variant": {"const": "astra_high_luna_sol"}}
+      },
+      "then": {
+        "properties": {
+          "verification_profile": {"enum": ["BALANCED", "FULL"]}
+        }
+      }
+    },
+    {
+      "if": {
+        "required": ["workflow_variant"],
+        "properties": {"workflow_variant": {"const": "astra_high_luna_echo"}}
+      },
+      "then": {
+        "properties": {
+          "verification_profile": {"const": "QUICK"}
+        }
+      }
+    },
     {
       "if": {
         "required": ["workflow_variant"],
@@ -511,6 +555,9 @@
         "source_mutation": {
           "type": "boolean"
         },
+        "verification_profile": {
+          "enum": ["BALANCED", "FULL", "QUICK"]
+        },
         "approval_policy": {
           "enum": [
             "AUTO",
@@ -757,14 +804,15 @@
             "medium",
             "high",
             "xhigh",
-            "max"
+            "max",
+            "unknown"
           ]
         },
         "source": {
-          "const": "host"
+          "enum": ["host", "unavailable"]
         },
         "confirmed": {
-          "const": true
+          "type": "boolean"
         }
       }
     },
@@ -1124,8 +1172,7 @@
         "criteria_evidence",
         "commands",
         "failures_or_unknowns",
-        "changed_paths",
-        "snapshot"
+        "changed_paths"
       ],
       "properties": {
         "run_id": {
@@ -1213,8 +1260,7 @@
         "next_scope",
         "evidence_requests",
         "attempts",
-        "limits",
-        "snapshot"
+        "limits"
       ],
       "properties": {
         "run_id": {
@@ -1387,8 +1433,7 @@
         "next_scope",
         "evidence_requests",
         "attempts",
-        "limits",
-        "snapshot"
+        "limits"
       ],
       "properties": {
         "run_id": {"$ref": "#/$defs/meaningfulString"},

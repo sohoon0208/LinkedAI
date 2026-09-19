@@ -34,7 +34,7 @@ class InstallerTests(unittest.TestCase):
             ROOT,
             source,
             symlinks=True,
-            ignore=shutil.ignore_patterns("__pycache__", ".pytest_cache", "*.profraw"),
+            ignore=shutil.ignore_patterns(".git", "__pycache__", ".pytest_cache", "*.profraw"),
         )
         return source
 

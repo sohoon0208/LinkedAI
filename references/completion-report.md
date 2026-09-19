@@ -6,8 +6,10 @@ event. The normal main result is:
 1. `LUNA RECON` — facts, reproduction, and scope.
 2. `PACKET` — compressed decision evidence and objective.
 3. `ASTRA HIGH PLAN` — strategy, scope, acceptance criteria, and verification.
-4. `LUNA MAX EXECUTION` — bounded edits, checks, and fresh snapshot.
-5. `SOL HIGH VERIFY` — independent criterion decision and completion gate.
+4. `LUNA MAX EXECUTION` — bounded edits, checks, and profile-appropriate
+   freshness evidence.
+5. `SOL LIGHT VERIFY` — independent criterion decision and balanced completion
+   gate. Use `SOL FULL VERIFY` for DEEP routing.
 6. `FINAL STATE` — `DONE` or the exact incomplete state.
 
 Include retries, replans, evidence requests, and blocked stops in their actual

@@ -18,11 +18,14 @@ contracts, dependencies, or scope must change, return evidence for `REPLAN`.
 Do not silently weaken a criterion, delete a failing test, or substitute an
 easier check.
 
-Run narrow checks first, then risk-appropriate regression, build, and runtime
-checks. Confirm that expected tests were discovered and executed; zero tests or
-all-skipped tests are not success. Preserve reproduction failures and failed
-verification history. A passing rerun may resolve an earlier failed check only
-with an explicit `resolved_by` or `supersedes` link.
+Run narrow, criterion-linked checks first, then only the risk-appropriate
+regression, build, and runtime checks requested by the plan. Confirm that
+expected tests were discovered and executed; zero tests or all-skipped tests
+are not success. Preserve reproduction failures and failed verification
+history. A passing rerun may resolve an earlier failed check only with an
+explicit `resolved_by` or `supersedes` link. A fresh full snapshot is required
+for FULL/deep runs; BALANCED source changes may report scoped evidence without
+building a full repository fingerprint.
 
 Return JSON matching `schemas/luna-result.schema.json`. Use supplied IDs; the
 controller attaches the actual agent ID. Return `IMPLEMENTATION_COMPLETE` or

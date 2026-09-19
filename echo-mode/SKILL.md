@@ -15,9 +15,12 @@ pass:
 
 `LUNA RECON -> PACKET -> ASTRA HIGH PLAN -> LUNA MAX EXECUTION -> LUNA MAX VERIFY`
 
-This is an explicit tradeoff. Echo Mode is usually faster and uses fewer model
-roles, but LUNA verifies work produced by LUNA, so it is not independent. In
-this skill only LUNA may declare `DONE`.
+This is an explicit tradeoff. Echo Mode is optimized for small, bounded tasks:
+the `QUICK` profile checks only the planned acceptance criteria, changed-file
+scope, relevant targeted checks, and unresolved failures. It does not require
+a full repository fingerprint for a source-changing run. LUNA verifies work
+produced by LUNA, so it is not independent. In this skill only LUNA may
+declare `DONE`.
 
 ## Roles
 
@@ -39,25 +42,29 @@ model switch from a role label.
 3. **ASTRA HIGH PLAN**: require a structured plan. `IMPLEMENT` authorizes only
    a `change` intent; other intents remain read-only. Stop for `REQUEST_EVIDENCE`,
    `REPLAN`, or `BLOCKED`.
-4. **LUNA MAX EXECUTION**: implement only the ASTRA plan's scope, run the
-   planned checks, and capture a fresh snapshot. Return `IMPLEMENTATION_COMPLETE`
-   or `IMPLEMENTATION_BLOCKED`, never `DONE` from this stage.
-5. **LUNA MAX VERIFY**: start a verification pass after execution. Do not edit
-   source while verifying. Review the plan, changed paths, command results,
-   observations, failures, and fresh snapshot. Return `DONE`, `RETRY`,
-   `REPLAN`, `EVIDENCE`, or `BLOCKED` using the Echo verification schema.
+4. **LUNA MAX EXECUTION**: implement only the ASTRA plan's scope and run the
+   planned targeted checks. Capture a fresh snapshot when one is useful or
+   required by the intent. Return `IMPLEMENTATION_COMPLETE` or
+   `IMPLEMENTATION_BLOCKED`, never `DONE` from this stage.
+5. **LUNA MAX QUICK VERIFY**: start a verification pass after execution. Do
+   not edit source while verifying. Review the plan, changed paths, targeted
+   command results, observations, and failures. A snapshot is optional for a
+   bounded source change, but any supplied snapshot must be internally
+   consistent. Return `DONE`, `RETRY`, `EVIDENCE`, or `BLOCKED` using the Echo
+   verification schema. Do not automatically replan.
 
-On `RETRY`, return to bounded LUNA execution. On `EVIDENCE`, collect the named
-proof before verifying again. On `REPLAN`, refresh the packet and ask ASTRA for
-a new plan. Normally cap at two LUNA execution attempts, two LUNA verification
-passes, and two ASTRA plans. Never silently widen scope or reset counters.
+On `RETRY`, return to bounded LUNA execution once. On `EVIDENCE`, collect the
+named proof before verifying again. A `REPLAN` is `BLOCKED` in QUICK mode;
+switch to the main LinkedAI FULL path if the strategy must change. Cap at two
+LUNA execution attempts, two LUNA verification passes, and one ASTRA plan.
+Never silently widen scope or reset counters.
 
 ## Reporting
 
 Report the actual uppercase sequence, model/effort/agent IDs, counters, exact
 commands/results, and token coverage:
 
-`LUNA RECON -> PACKET -> ASTRA HIGH PLAN -> LUNA MAX EXECUTION -> LUNA MAX VERIFY -> FINAL STATE`
+`LUNA RECON -> PACKET -> ASTRA HIGH PLAN -> LUNA MAX EXECUTION -> LUNA MAX QUICK VERIFY -> FINAL STATE`
 
 Report `TOKENS: COMPLETE`, `PARTIAL`, or `UNAVAILABLE` from host counters.
 Packet length is not an exact token count. Clearly label the final decision as

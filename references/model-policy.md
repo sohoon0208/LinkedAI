@@ -10,7 +10,9 @@
 
 The active LinkedAI path dispatches all three roles in this order:
 
-`LUNA RECON -> PACKET -> ASTRA HIGH PLAN -> LUNA MAX EXECUTION -> SOL HIGH VERIFY`
+`LUNA RECON -> PACKET -> ASTRA HIGH PLAN -> LUNA MAX EXECUTION -> SOL LIGHT VERIFY`
+
+FAST/STANDARD use `BALANCED` SOL verification. DEEP uses `FULL`.
 
 The host must support and confirm the requested model/effort pair before each
 role is dispatched. If it cannot be selected or confirmed, report `MODEL
@@ -22,7 +24,8 @@ running task's model.
 - ASTRA receives the stable brief, compressed packet, and targeted excerpts. It
   does not browse or edit the repository.
 - SOL receives the bounded packet, ASTRA plan, LUNA result, direct evidence,
-  and fresh snapshot. It does not browse or edit the repository.
+  and profile-appropriate freshness evidence. It does not browse or edit the
+  repository.
 - LUNA receives the existing workspace, ASTRA plan, execution scope, criteria,
   and verification commands. Prefer one long-lived LUNA worker.
 - The controller forwards artifacts and records receipts; it must not duplicate

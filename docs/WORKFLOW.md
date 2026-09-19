@@ -2,7 +2,9 @@
 
 Every active LinkedAI task follows:
 
-`LUNA MAX RECON -> PACKET -> ASTRA HIGH PLAN -> LUNA MAX EXECUTION -> SOL HIGH VERIFY`
+`LUNA MAX RECON -> PACKET -> ASTRA HIGH PLAN -> LUNA MAX EXECUTION -> SOL LIGHT VERIFY`
+
+FAST/STANDARD use the `BALANCED` SOL profile. DEEP uses `FULL`.
 
 LUNA recon is read-only. The packet is the only planning handoff. ASTRA HIGH
 returns a structured plan; there is no user-approval pause. LUNA MAX executes

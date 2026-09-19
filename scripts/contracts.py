@@ -61,6 +61,12 @@ LUNA_ROLES = {"LUNA", "LUNA_EXECUTION", "LUNA_VERIFICATION"}
 SOL_ROLES = {"SOL", "SOL_VERIFICATION"}
 DISPATCH_MODES = ("FAST", "STANDARD", "DEEP")
 DISPATCH_RANK = {mode: index for index, mode in enumerate(DISPATCH_MODES)}
+VERIFICATION_PROFILES = ("BALANCED", "FULL", "QUICK")
+VERIFICATION_PROFILE_BY_MODE = {
+    "FAST": "BALANCED",
+    "STANDARD": "BALANCED",
+    "DEEP": "FULL",
+}
 ASTRA_HIGH_LUNA_SOL_WORKFLOW_STAGES = (
     "LUNA_RECON",
     "PACKET",
@@ -337,6 +343,7 @@ def select_dispatch_mode(
         "input_valid": not invalid_inputs and not eligibility_incomplete,
         "workflow_variant": WORKFLOW_VARIANTS[selected],
         "workflow_stages": list(WORKFLOW_STAGES_BY_MODE[selected]),
+        "verification_profile": VERIFICATION_PROFILE_BY_MODE[selected],
         "approval_policy": approval_policy,
         "approval_required": approval_required,
         "post_approval_variant": post_approval_variant,
@@ -760,6 +767,8 @@ def _check_receipt(
     *,
     plan_effort: str = "high",
     verification_authority: str = "SOL",
+    strict: bool = True,
+    warnings: Optional[List[str]] = None,
 ) -> None:
     if not isinstance(receipt, dict):
         errors.append(f"dispatch.{slot} must be a receipt object")
@@ -781,31 +790,45 @@ def _check_receipt(
         errors.append(f"dispatch.{slot} has wrong role {role!r}; expected {expected}")
     model = receipt.get("model")
     effort = receipt.get("reasoning_effort")
+    metadata_issues: List[str] = []
     if slot == "plan":
         if model != "gpt-6-astra":
-            errors.append(f"dispatch.{slot} must use model gpt-6-astra, got {model!r}")
+            metadata_issues.append(
+                f"dispatch.{slot} must use model gpt-6-astra, got {model!r}"
+            )
         if effort != plan_effort:
-            errors.append(
+            metadata_issues.append(
                 f"dispatch.{slot} must use reasoning_effort {plan_effort}, got {effort!r}"
             )
     elif slot == "verification":
         expected_model = "gpt-5.6-luna" if verification_authority == "LUNA" else "gpt-5.6-sol"
         expected_effort = "max" if verification_authority == "LUNA" else "high"
         if model != expected_model:
-            errors.append(f"dispatch.{slot} must use model {expected_model}, got {model!r}")
+            metadata_issues.append(
+                f"dispatch.{slot} must use model {expected_model}, got {model!r}"
+            )
         if effort != expected_effort:
-            errors.append(
+            metadata_issues.append(
                 f"dispatch.{slot} must use reasoning_effort {expected_effort}, got {effort!r}"
             )
     else:
         if model != "gpt-5.6-luna":
-            errors.append(f"dispatch.execution must use model gpt-5.6-luna, got {model!r}")
+            metadata_issues.append(
+                f"dispatch.execution must use model gpt-5.6-luna, got {model!r}"
+            )
         if effort != "max":
-            errors.append(f"dispatch.execution must use reasoning_effort max, got {effort!r}")
+            metadata_issues.append(
+                f"dispatch.execution must use reasoning_effort max, got {effort!r}"
+            )
     if receipt.get("source") != "host":
-        errors.append(f"dispatch.{slot}.source must be 'host'")
+        metadata_issues.append(f"dispatch.{slot}.source must be 'host'")
     if receipt.get("confirmed") is not True:
-        errors.append(f"dispatch.{slot}.confirmed must be true")
+        metadata_issues.append(f"dispatch.{slot}.confirmed must be true")
+    if metadata_issues:
+        if strict:
+            errors.extend(metadata_issues)
+        elif warnings is not None:
+            warnings.extend(metadata_issues)
 
 
 def _validate_plan_gate_components(
@@ -1187,9 +1210,12 @@ def _check_approved_plan_fast_bundle(
 
 
 def _check_verification_budget(
-    verification: Mapping[str, Any], errors: List[str]
+    verification: Mapping[str, Any],
+    errors: List[str],
+    *,
+    profile: str = "FULL",
 ) -> None:
-    """Reject counter overflow and nonterminal states at their hard ceiling."""
+    """Reject counter overflow and profile-specific runaway verification."""
 
     attempts = verification.get("attempts")
     limits = verification.get("limits")
@@ -1227,6 +1253,38 @@ def _check_verification_budget(
             f"verification at the {authority or 'verification'} ceiling must be BLOCKED or a valid DONE"
         )
 
+    if profile not in VERIFICATION_PROFILES:
+        errors.append(
+            f"verification profile must be one of {', '.join(VERIFICATION_PROFILES)}"
+        )
+        return
+
+    # BALANCED and QUICK deliberately allow one repair cycle.  A larger
+    # budget silently recreates the slow, open-ended loop these profiles are
+    # intended to avoid.  DEEP/FULL retains the historical caller-selected
+    # limits.
+    bounded_limits = {
+        "max_luna_attempts": limits.get("max_luna_attempts"),
+        "max_astra_plans": limits.get("max_astra_plans"),
+    }
+    if authority == "LUNA":
+        bounded_limits["max_luna_verifications"] = limits.get("max_luna_verifications")
+    else:
+        bounded_limits["max_sol_verifications"] = limits.get("max_sol_verifications")
+    if profile in {"BALANCED", "QUICK"}:
+        ceilings = {
+            "max_luna_attempts": 2,
+            "max_astra_plans": 1,
+            "max_sol_verifications": 2,
+            "max_luna_verifications": 2,
+        }
+        for limit_key, ceiling in ceilings.items():
+            value = bounded_limits.get(limit_key)
+            if isinstance(value, int) and value > ceiling:
+                errors.append(
+                    f"{profile} verification allows at most {ceiling} for verification.{limit_key}"
+                )
+
 
 def check_run(
     bundle_path: Path | str | Mapping[str, Any], root: Path | str
@@ -1247,6 +1305,9 @@ def check_run(
     fast = workflow_variant == "fast_luna_sol"
     approved_plan_fast = workflow_variant == APPROVED_PLAN_FAST_VARIANT
     echo = workflow_variant == ASTRA_HIGH_LUNA_ECHO_VARIANT
+    verification_profile = bundle.get("verification_profile") or "FULL"
+    strict_verification = verification_profile == "FULL"
+    receipt_warnings: List[str] = []
     plan = (
         _fast_plan_view(bundle, errors)
         if fast
@@ -1261,7 +1322,11 @@ def check_run(
     errors.extend(validate_instance(verification_schema, verification))
     if isinstance(bundle.get("task_packet"), dict):
         errors.extend(validate_instance("task-packet", bundle["task_packet"]))
-    _check_verification_budget(verification, errors)
+    _check_verification_budget(
+        verification,
+        errors,
+        profile=verification_profile,
+    )
     if fast:
         _check_fast_bundle(bundle, plan, result, verification, errors)
     elif approved_plan_fast:
@@ -1301,14 +1366,25 @@ def check_run(
                 plan,
                 errors,
                 plan_effort="medium" if legacy_plan else "high",
+                strict=strict_verification,
+                warnings=receipt_warnings,
             )
-        _check_receipt("execution", dispatch.get("execution"), result, errors)
+        _check_receipt(
+            "execution",
+            dispatch.get("execution"),
+            result,
+            errors,
+            strict=strict_verification,
+            warnings=receipt_warnings,
+        )
         _check_receipt(
             "verification",
             dispatch.get("verification"),
             verification,
             errors,
             verification_authority="LUNA" if echo else "SOL",
+            strict=strict_verification,
+            warnings=receipt_warnings,
         )
         slot_ids = {
             slot: dispatch.get(slot, {}).get("agent_id")
@@ -1357,18 +1433,61 @@ def check_run(
         errors,
         plan_label="FAST packet" if fast else "ASTRA plan",
     )
+    if (
+        workflow_variant == ASTRA_HIGH_LUNA_SOL_VARIANT
+        and bundle.get("verification_profile") is not None
+        and isinstance(bundle.get("routing_decision"), Mapping)
+    ):
+        try:
+            routed_profile = select_dispatch_mode(
+                bundle["routing_decision"]
+            ).get("verification_profile")
+            if routed_profile != verification_profile:
+                errors.append(
+                    "verification_profile does not match the selected dispatch mode: "
+                    f"expected {routed_profile!r}, got {verification_profile!r}"
+                )
+        except ContractError as exc:
+            errors.append(f"cannot derive verification profile from routing decision: {exc}")
     final_snapshot = bundle.get("snapshot")
-    if final_snapshot != result.get("snapshot"):
-        errors.append("bundle.snapshot must equal result.snapshot")
-    if final_snapshot != verification.get("snapshot"):
-        errors.append("bundle.snapshot must equal verification.snapshot")
+    result_snapshot = result.get("snapshot")
+    verification_snapshot = verification.get("snapshot")
+    snapshot_parts = (final_snapshot, result_snapshot, verification_snapshot)
+    present_snapshot_parts = [value is not None for value in snapshot_parts]
+    snapshot_complete = all(present_snapshot_parts)
+    snapshot_required = strict_verification or intent != "change"
+    if snapshot_required and not isinstance(final_snapshot, dict):
+        errors.append(
+            f"{verification_profile} verification requires bundle.snapshot"
+        )
+    if snapshot_required and not isinstance(result_snapshot, dict):
+        errors.append(
+            f"{verification_profile} verification requires result.snapshot"
+        )
+    if snapshot_required and not isinstance(verification_snapshot, dict):
+        errors.append(
+            f"{verification_profile} verification requires verification.snapshot"
+        )
+    if any(present_snapshot_parts) and not snapshot_complete:
+        errors.append(
+            "bundle, result, and verification snapshots must either all be present or all be omitted"
+        )
+    if snapshot_complete:
+        if final_snapshot != result_snapshot:
+            errors.append("bundle.snapshot must equal result.snapshot")
+        if final_snapshot != verification_snapshot:
+            errors.append("bundle.snapshot must equal verification.snapshot")
     baseline_snapshot = bundle.get("baseline_snapshot")
     if isinstance(final_snapshot, dict) and isinstance(baseline_snapshot, dict):
         if final_snapshot.get("kind") != baseline_snapshot.get("kind"):
             errors.append("snapshot and baseline_snapshot must use the same kind")
+    if snapshot_required and not isinstance(baseline_snapshot, dict):
+        errors.append(
+            f"{verification_profile} verification requires baseline_snapshot"
+        )
 
     changed_paths = result.get("changed_paths", [])
-    if isinstance(final_snapshot, dict) and final_snapshot.get("kind") == "scoped":
+    if snapshot_complete and isinstance(final_snapshot, dict) and final_snapshot.get("kind") == "scoped":
         snapshot_paths = set(final_snapshot.get("paths", []))
         for changed_path in changed_paths if isinstance(changed_paths, list) else []:
             try:
@@ -1456,17 +1575,24 @@ def check_run(
             elif not _meaningful(observed.get("evidence")):
                 errors.append(f"DONE requires evidence for planned observation {observation_id!r}")
 
-    try:
-        current = _snapshot_current(final_snapshot, root)
-        if current != final_snapshot:
-            if final_snapshot.get("kind") == "git" and set(current.get("paths", [])) != set(final_snapshot.get("paths", [])):
-                errors.append(
-                    "stale Git snapshot scope: caller-supplied paths do not cover the "
-                    "complete current tracked/nonignored worktree"
-                )
-            errors.append("stale code snapshot: current source differs from bundle.snapshot")
-    except ContractError as exc:
-        errors.append(f"cannot recompute current code snapshot: {exc}")
+    # FULL (and all non-change runs) retain the expensive freshness proof.
+    # BALANCED/QUICK change runs may omit fingerprints; if they provide one,
+    # the cross-artifact equality and scoped-path checks above still apply.
+    if strict_verification or intent != "change":
+        if not isinstance(final_snapshot, dict):
+            errors.append("cannot recompute current code snapshot without bundle.snapshot")
+        else:
+            try:
+                current = _snapshot_current(final_snapshot, root)
+                if current != final_snapshot:
+                    if final_snapshot.get("kind") == "git" and set(current.get("paths", [])) != set(final_snapshot.get("paths", [])):
+                        errors.append(
+                            "stale Git snapshot scope: caller-supplied paths do not cover the "
+                            "complete current tracked/nonignored worktree"
+                        )
+                    errors.append("stale code snapshot: current source differs from bundle.snapshot")
+            except ContractError as exc:
+                errors.append(f"cannot recompute current code snapshot: {exc}")
 
     # A baseline is especially important for review/investigation/explanation
     # runs: changed_paths can be falsely empty, so compare the whole declared
@@ -1476,14 +1602,17 @@ def check_run(
             errors.append(f"non-change intent {intent!r} cannot report changed_paths")
         if bundle.get("source_mutation") is True:
             errors.append(f"non-change intent {intent!r} cannot report source_mutation")
-        try:
-            current_baseline = _snapshot_current(baseline_snapshot, root)
-            if current_baseline != baseline_snapshot:
-                errors.append("read-only source mutation detected against baseline_snapshot")
-            if final_snapshot != baseline_snapshot:
-                errors.append("read-only run must retain an unchanged final snapshot")
-        except ContractError as exc:
-            errors.append(f"cannot recompute baseline_snapshot: {exc}")
+        if not isinstance(baseline_snapshot, dict):
+            errors.append("read-only run requires baseline_snapshot")
+        else:
+            try:
+                current_baseline = _snapshot_current(baseline_snapshot, root)
+                if current_baseline != baseline_snapshot:
+                    errors.append("read-only source mutation detected against baseline_snapshot")
+                if final_snapshot != baseline_snapshot:
+                    errors.append("read-only run must retain an unchanged final snapshot")
+            except ContractError as exc:
+                errors.append(f"cannot recompute baseline_snapshot: {exc}")
 
     summary = {
         "valid": not errors,
@@ -1491,8 +1620,10 @@ def check_run(
         "plan_id": plan_id,
         "state": verification.get("state"),
         "intent": intent,
+        "verification_profile": verification_profile,
         "snapshot": final_snapshot,
         "resolved_verification_failures": sorted(resolved_failures),
+        "warnings": sorted(set(receipt_warnings)),
     }
     return not errors, errors, summary
 
@@ -1647,6 +1778,7 @@ def next_stage(
     cap_reached = handoff_count >= max_handoffs
     approved_plan_fast = bundle.get("workflow_variant") == APPROVED_PLAN_FAST_VARIANT
     echo = bundle.get("workflow_variant") == ASTRA_HIGH_LUNA_ECHO_VARIANT
+    verification_profile = bundle.get("verification_profile") or "FULL"
     if legacy and state == "DONE":
         next_name = "STOP_BLOCKED"
         allowed = False
@@ -1665,6 +1797,14 @@ def next_stage(
         next_name = "ASTRA_PLAN_APPROVAL"
         allowed = True
         reason = "approved plan is invalidated; a fresh ASTRA plan and user approval are required"
+    elif echo and state == "REPLAN" and verification_profile == "QUICK":
+        next_name = "STOP_BLOCKED"
+        allowed = False
+        reason = "QUICK echo verification does not authorize automatic replanning"
+    elif state == "REPLAN" and verification_profile == "BALANCED":
+        next_name = "STOP_BLOCKED"
+        allowed = False
+        reason = "BALANCED verification does not authorize automatic replanning; escalate to FULL"
     elif echo and state == "REPLAN":
         next_name = "ASTRA_PLAN"
         allowed = True
@@ -1685,6 +1825,7 @@ def next_stage(
         "cap_reached": cap_reached,
         "legacy_artifact": legacy,
         "intent": artifact_intent,
+        "verification_profile": verification_profile,
         "reason": reason,
     }
 

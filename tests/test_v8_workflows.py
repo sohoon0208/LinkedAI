@@ -119,11 +119,11 @@ class V8WorkflowTests(unittest.TestCase):
     def verification(self, authority):
         if authority == "SOL":
             attempts = {"sol_verifications": 1, "luna_attempts": 1, "astra_plans": 1}
-            limits = {"max_sol_verifications": 2, "max_luna_attempts": 2, "max_astra_plans": 2}
+            limits = {"max_sol_verifications": 2, "max_luna_attempts": 2, "max_astra_plans": 1}
             agent_id = "sol-v8-verify-1"
         else:
             attempts = {"luna_verifications": 1, "luna_attempts": 1, "astra_plans": 1}
-            limits = {"max_luna_verifications": 2, "max_luna_attempts": 2, "max_astra_plans": 2}
+            limits = {"max_luna_verifications": 2, "max_luna_attempts": 2, "max_astra_plans": 1}
             agent_id = "luna-v8-verify-1"
         return {
             "run_id": "v8-run-1",
@@ -160,6 +160,7 @@ class V8WorkflowTests(unittest.TestCase):
             "source_mutation": True,
             "dispatch_mode": "STANDARD",
             "workflow_variant": variant,
+            "verification_profile": "QUICK" if authority == "LUNA" else "BALANCED",
             "routing_decision": self.routing(),
             "task_packet": self.packet(),
             "plan": self.plan(),
@@ -200,12 +201,48 @@ class V8WorkflowTests(unittest.TestCase):
         self.assertTrue(valid, errors)
         self.assertEqual(summary["state"], "DONE")
 
-    def test_active_main_bundle_rejects_medium_astra_receipt(self):
+    def test_balanced_main_bundle_allows_metadata_mismatch_with_warning(self):
         bundle = self.bundle(contracts.ASTRA_HIGH_LUNA_SOL_VARIANT, "SOL")
+        bundle["dispatch"]["plan"].update(
+            {
+                "model": "runtime-unknown",
+                "reasoning_effort": "unknown",
+                "source": "unavailable",
+                "confirmed": False,
+            }
+        )
+        valid, errors, summary = contracts.check_run(bundle, self.project)
+        self.assertTrue(valid, errors)
+        self.assertTrue(summary["warnings"])
+
+    def test_full_profile_retains_strict_receipt_gate(self):
+        bundle = self.bundle(contracts.ASTRA_HIGH_LUNA_SOL_VARIANT, "SOL")
+        bundle["verification_profile"] = "FULL"
+        bundle["routing_decision"]["tier"] = 3
         bundle["dispatch"]["plan"]["reasoning_effort"] = "medium"
         valid, errors, _ = contracts.check_run(bundle, self.project)
         self.assertFalse(valid)
         self.assertTrue(any("reasoning_effort high" in error for error in errors))
+
+    def test_balanced_main_run_can_omit_full_snapshots(self):
+        bundle = self.bundle(contracts.ASTRA_HIGH_LUNA_SOL_VARIANT, "SOL")
+        bundle.pop("snapshot")
+        bundle.pop("baseline_snapshot")
+        bundle["result"].pop("snapshot")
+        bundle["verification"].pop("snapshot")
+        valid, errors, summary = contracts.check_run(bundle, self.project)
+        self.assertTrue(valid, errors)
+        self.assertEqual(summary["verification_profile"], "BALANCED")
+
+    def test_quick_echo_run_can_omit_full_snapshots(self):
+        bundle = self.bundle(contracts.ASTRA_HIGH_LUNA_ECHO_VARIANT, "LUNA")
+        bundle.pop("snapshot")
+        bundle.pop("baseline_snapshot")
+        bundle["result"].pop("snapshot")
+        bundle["verification"].pop("snapshot")
+        valid, errors, summary = contracts.check_run(bundle, self.project)
+        self.assertTrue(valid, errors)
+        self.assertEqual(summary["verification_profile"], "QUICK")
 
     def test_echo_replan_returns_to_astra_plan(self):
         bundle = self.bundle(contracts.ASTRA_HIGH_LUNA_ECHO_VARIANT, "LUNA")
@@ -219,8 +256,8 @@ class V8WorkflowTests(unittest.TestCase):
             }
         )
         result = contracts.next_stage(bundle, intent="change")
-        self.assertEqual(result["next_stage"], "ASTRA_PLAN")
-        self.assertTrue(result["allowed"])
+        self.assertEqual(result["next_stage"], "STOP_BLOCKED")
+        self.assertFalse(result["allowed"])
 
 
 if __name__ == "__main__":

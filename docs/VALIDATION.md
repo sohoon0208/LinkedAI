@@ -8,7 +8,7 @@ for every application task.
 
 - `scripts/linkedai validate`: passed; active Draft 2020-12 schemas, current
   example artifacts, required files, and UI metadata validated.
-- `scripts/linkedai test`: 110 tests passed, with no failures or skips.
+- `scripts/linkedai test`: 113 tests passed, with no failures or skips.
 - Skill-authoring `quick_validate.py`: passed for LinkedAI and Echo Mode.
 - Shell syntax checks for the helpers and installers: passed.
 - Echo Mode package validation: passed.
@@ -22,10 +22,12 @@ verification contract.
 The active workflow smoke tests prove that:
 
 1. routing for FAST, STANDARD, and DEEP reports the same
-   `LUNA RECON -> PACKET -> ASTRA HIGH PLAN -> LUNA MAX EXECUTION -> SOL HIGH VERIFY`
+   `LUNA RECON -> PACKET -> ASTRA HIGH PLAN -> LUNA MAX EXECUTION -> SOL LIGHT VERIFY`
    stages;
-2. an active bundle rejects an ASTRA Medium receipt;
-3. a valid main bundle accepts ASTRA HIGH, LUNA MAX, and SOL HIGH; and
+2. a BALANCED active bundle can omit full snapshots and treat unavailable
+   receipt metadata as a warning, while a FULL bundle still rejects an ASTRA
+   Medium receipt;
+3. a valid main bundle accepts ASTRA HIGH, LUNA MAX, and SOL LIGHT; and
 4. a valid Echo bundle accepts ASTRA HIGH, LUNA MAX, and LUNA MAX verification.
 
 The installed source and active package contents were synchronized. The main

@@ -4,6 +4,7 @@
   "source_mutation": true,
   "dispatch_mode": "STANDARD",
   "workflow_variant": "astra_high_luna_sol",
+  "verification_profile": "BALANCED",
   "routing_decision": {
     "tier": 1,
     "intent": "change",
@@ -103,9 +104,9 @@
       "astra_plans": 1
     },
     "limits": {
-      "max_sol_verifications": 5,
+      "max_sol_verifications": 2,
       "max_luna_attempts": 2,
-      "max_astra_plans": 5
+      "max_astra_plans": 1
     },
     "snapshot": {
       "kind": "scoped",

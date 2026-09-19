@@ -63,6 +63,13 @@
     "dispatch_reason": {
       "$ref": "#/$defs/meaningfulString"
     },
+    "verification_profile": {
+      "enum": [
+        "BALANCED",
+        "FULL",
+        "QUICK"
+      ]
+    },
     "approval_policy": {
       "enum": [
         "AUTO",

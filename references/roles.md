@@ -2,7 +2,7 @@
 
 The authoritative active sequence is in [SKILL.md](../SKILL.md):
 
-`LUNA RECON -> PACKET -> ASTRA HIGH PLAN -> LUNA MAX EXECUTION -> SOL HIGH VERIFY`
+`LUNA RECON -> PACKET -> ASTRA HIGH PLAN -> LUNA MAX EXECUTION -> SOL LIGHT VERIFY`
 
 ASTRA HIGH owns packet-only strategic reasoning: root cause, architecture,
 scope, tradeoffs, acceptance criteria, and test design. It must not edit or
@@ -13,9 +13,9 @@ reproduction, all source/test edits, integration, commands, and evidence. Its
 `IMPLEMENTATION_COMPLETE` result is submitted to SOL and is not completion.
 
 SOL HIGH owns independent final verification. It reviews the goal, packet,
-ASTRA plan, LUNA evidence, direct observations, and fresh snapshot. Only a
-controller-stamped SOL verification with state `DONE`, followed by a passing
-completion gate, closes a main LinkedAI run.
+ASTRA plan, LUNA evidence, direct observations, and profile-appropriate
+freshness evidence. Only a controller-stamped SOL verification with state
+`DONE`, followed by a passing completion gate, closes a main LinkedAI run.
 
 The controller may dispatch, attach host receipts, validate artifacts, track
 counters, and report. It cannot claim to be another model, fabricate a
